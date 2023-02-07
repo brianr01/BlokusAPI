@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31313.79
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlokusAPI", "BlokusAPI\BlokusAPI.csproj", "{F657F328-C703-4FFC-9667-A8154A432DF7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlokusAPI", "BlokusAPI\BlokusAPI.csproj", "{F657F328-C703-4FFC-9667-A8154A432DF7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "TestProject1\UnitTests.csproj", "{661664A3-8BAA-4DF0-A6A2-F7D26526CC16}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{F657F328-C703-4FFC-9667-A8154A432DF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F657F328-C703-4FFC-9667-A8154A432DF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F657F328-C703-4FFC-9667-A8154A432DF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{661664A3-8BAA-4DF0-A6A2-F7D26526CC16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{661664A3-8BAA-4DF0-A6A2-F7D26526CC16}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{661664A3-8BAA-4DF0-A6A2-F7D26526CC16}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{661664A3-8BAA-4DF0-A6A2-F7D26526CC16}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
