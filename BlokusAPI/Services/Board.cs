@@ -1,9 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using static BlokusAPI.Services.Pieces;
 
 namespace BlokusAPI.Services
 {
+    public class Move
+    {
+        public Pieces.Piece Piece { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int[,] PieceVariant { get; set; }
+    }
+
     public class Board
     {
         public enum Colors { Empty, Red, Green, Blue, Yellow };
@@ -11,10 +20,12 @@ namespace BlokusAPI.Services
 
         public int Width;
         public int Height;
+        private int boardSize;
 
         public Board(int size = 20)
         {
-            BoardValues = new Colors[20, 20];
+            boardSize = size;
+            BoardValues = new Colors[boardSize, boardSize];
 
             Width = BoardValues.GetLength(0);
             Height = BoardValues.GetLength(1);
@@ -25,47 +36,109 @@ namespace BlokusAPI.Services
             return (int)BoardValues[0, 0];
         }
 
-        public void Moves()
+        public List<Move> Moves(Colors selectedColor) // Not tested.
         {
-            Colors selectedColor = Colors.Red;
-            List<Pieces.Piece> availablePieces = new List<Pieces.Piece> { Pieces.Piece.PentominoF, Pieces.Piece.PentominoL };
-
-
-            List<int[]> playableCorners = GetPlayableCorners(selectedColor);
-
-            Dictionary<Pieces.Piece, List<int[,]>> piecesWithSymmetries = Pieces.GetPiecesWithSymmetries(availablePieces);
-
-            List<Tuple<Pieces.Piece, int, int, int[,]>> options = new List<Tuple<Pieces.Piece, int, int, int[,]>>();
-
-            // For each possible symmetry list (pieces -> list)
-            foreach (KeyValuePair<Pieces.Piece, List<int[,]>> pieceSymmetries in piecesWithSymmetries)
+            List<Pieces.Piece> availablePieces = new List<Pieces.Piece>
             {
-                // For each possible symmetry (list -> symmetry)
-                foreach (int[,] piece in pieceSymmetries.Value)
+                Piece.Domino,
+                Piece.TrominoI,
+                Piece.TrominoL,
+                Piece.TetrominoI,
+                Piece.TetrominoO,
+                Piece.TetrominoT,
+                Piece.TetrominoL,
+                Piece.TetrominoS,
+                Piece.PentominoF,
+                Piece.PentominoI,
+                Piece.PentominoL,
+                Piece.PentominoN,
+                Piece.PentominoP,
+                Piece.PentominoT,
+                Piece.PentominoU,
+                Piece.PentominoV,
+                Piece.PentominoW,
+                Piece.PentominoX,
+                Piece.PentominoY,
+                Piece.PentominoZ
+            };
+            //List<Pieces.Piece> availablePieces = Pieces.AllPieces;
+
+
+            List<int[]> playableNodes = GetPlayableNodes(selectedColor);
+
+            List<Move> moves = new List<Move>();
+
+            // Loop over the symmetries for each pice (pieces -> list)
+            foreach (Pieces.Piece piece in availablePieces)
+            {
+                List<int[,]> pieceSymmetries = Pieces.GetPieceWithSymmetries(piece);
+
+                // Loop over the symmetries  (list -> symmetry)
+                foreach (int[,] pieceVariant in pieceSymmetries)
                 {
-                    List<int[]> playablePieceOffsets = GetPlayablePieceOffsets(piece);
+
+                    List<int[]> playablePieceOffsets = GetPlayablePieceOffsets(pieceVariant);
 
                     // For each the locations that are playable from the symmetry (symmetry -> playable offsets)
-                    foreach (int[] offset in playablePieceOffsets)
+                    foreach (int[] playableNode in playableNodes)
                     {
-                        // For each playable location from the symmetry (playable offsets -> corner)
-                        foreach (int[] playableCorner in playableCorners)
+                        int nodeX = playableNode[0];
+                        int nodeY = playableNode[1];
+                        foreach (int[] offset in playablePieceOffsets)
                         {
-                            int x = playableCorner[0] - offset[0];
-                            int y = playableCorner[1] - offset[1];
-                            if (isPiecePlayable(x, y, piece, selectedColor))
+                            int offsetX = offset[0];
+                            int offsetY = offset[1];
+
+                            int playableCornerX = nodeX;
+                            int playableCornerY = nodeY;
+
+                            int x = playableCornerX - offsetX;
+                            int y = playableCornerY - offsetY;
+                            if (IsPiecePlayable(x, y, pieceVariant, selectedColor))
                             {
-                                options.Add(new Tuple<Pieces.Piece, int, int, int[,]>(pieceSymmetries.Key, x, y, piece));
+                                Move move = new Move();
+                                move.X = x;
+                                move.Y = y;
+                                move.Piece = piece;
+                                move.PieceVariant = pieceVariant;
+                                moves.Add(move);
                             }
 
                         }
                     }
+
                 }
             }
 
-            // return options
+            return moves;
         }
 
+        public List<Tuple<int, int, int[,]>> getMovesWithPiece(Pieces.Piece piece, Colors selectedColor, List<int[]> playableNodes)
+        {
+            List<Tuple<int, int, int[,]>> moves = new List<Tuple<int, int, int[,]>>();
+            
+
+            return moves;
+        }
+
+        // For each piece -> For each Variant -> For each Node -> for each offset
+
+        public void getMovesForPieceWithoutSymmetries(int[,] piece, Colors selectedColor, List<int[]> playableNodes)
+        {
+            
+
+        }
+
+        public List<Tuple<int, int, int[,]>> getMovesForPieceWithoutSymmetriesAtNode(int[,] piece, Colors selectedColor, int nodeX, int nodeY, List<int[]> playablePieceOffsets)
+        {
+            List<Tuple<int, int, int[,]>> moves = new List<Tuple<int, int, int[,]>>();
+           
+
+            return moves;
+        }
+
+        // Returns the same values as GetPlayableNodes, but is more efficient.
+        // (Note may be a different order, but will have the same values.)
         public List<int[]> GetPlayableCorners(Colors selectedColor)
         {
             List<int[]> currentLocations = GetLocationsWithValue(selectedColor);
@@ -82,7 +155,7 @@ namespace BlokusAPI.Services
                 if (IsPlayableNode(cornerLocation[0], cornerLocation[1], selectedColor))
                 {
                     playableCorners.Add(cornerLocation);
-                }
+               }
             }
 
             return playableCorners;
@@ -90,11 +163,17 @@ namespace BlokusAPI.Services
 
         public List<int[]> GetPlayablePieceOffsets(int[,] piece)
         {
+            // Create a small board. All the pieces will fit inside the inner 5x5 area allowing for the corner caluclations to all appear.
             Board miniBoard = new Board(7);
-            miniBoard.PlacePiece(1, 1, piece, Colors.Blue);
+            Colors color = Colors.Blue;
 
-            List<int[]> playableCorners = miniBoard.GetPlayableCorners(Colors.Blue);
+            // Place the piece on it.
+            miniBoard.PlacePiece(1, 1, piece, color);
 
+            // Get the playable corners (the offsets).
+            List<int[]> playableCorners = miniBoard.GetPlayableCorners(color);
+
+            // Change the origin of the piece to zero.
             List<int[]> playablePieceOffsets = new List<int[]>();
             foreach (int[] cornerLocation in playableCorners)
             {
@@ -110,14 +189,14 @@ namespace BlokusAPI.Services
             return UpdateSquares(locations, color);
         }
 
-        public bool isPiecePlayable(int x, int y, int[,] piece, Colors color)
+        public bool IsPiecePlayable(int xOrigin, int yOrigin, int[,] piece, Colors color)
         {
-            List<int[]> locations = ConvertPieceToLocations(x, y, piece);
+            List<int[]> locations = ConvertPieceToLocations(xOrigin, yOrigin, piece);
 
-            return AreSquaresPlayable(locations, color);
+            return ValidSquarePlacements(locations, color);
         }
 
-        public List<int[]> ConvertPieceToLocations(int x, int y, int[,] piece)
+        public List<int[]> ConvertPieceToLocations(int xOrigin, int yOrigin, int[,] piece)
         {
             List<int[]> locations = new List<int[]>();
             for (int i = 0; i < piece.GetLength(0); i++)
@@ -126,7 +205,7 @@ namespace BlokusAPI.Services
                 {
                     if (piece[i, j] == 1)
                     {
-                        locations.Add(new int[] { x + i, y + j });
+                        locations.Add(new int[] { xOrigin + i, yOrigin + j });
                     }
                 }
             }
@@ -134,23 +213,7 @@ namespace BlokusAPI.Services
             return locations;
         }
 
-        public bool AreSquaresPlayable(int[,] locations, Colors color)
-        {
-            for (int i = 0; i < locations.GetLength(0); i++)
-            {
-                int x = locations[i, 0];
-                int y = locations[i, 1];
-
-                if (!ValidSquarePlacement(x, y, color))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        public bool AreSquaresPlayable(List<int[]> locations, Colors color)
+        public bool ValidSquarePlacements(List<int[]> locations, Colors color)
         {
             foreach (int[] location in locations)
             {
@@ -164,59 +227,20 @@ namespace BlokusAPI.Services
             return true;
         }
 
-        public bool UpdateSquares(int[,] locations, Colors color)
+        public bool UpdateSquares(List<int[]> locations, Colors color)
         {
-            if (!AreSquaresPlayable(locations, color))
+            if (!ValidSquarePlacements(locations, color))
             {
                 return false;
             }
 
             UpdateEmptySquares(locations, color);
 
-            return true;
-        }
-
-        public bool UpdateSquares(List<int[]> locations, Colors color)
-        {
-            for (int i = 0; i < locations.Count(); i++)
-            {
-                int[] location = locations[i];
-
-                if (!ValidSquarePlacement(location[0], location[1], color))
-                {
-                    return false;
-                }
-            }
-
-            UpdateEmptySquares(locations, color);
 
             return true;
-        }
-
-        public void UpdateEmptySquares(int[,] locations, Colors color)
-        {
-
-            for (int i = 0; i < locations.GetLength(0); i++)
-            {
-                int x = locations[i, 0];
-                int y = locations[i, 1];
-
-                UpdateEmptySquare(x, y, color);
-            }
         }
 
         public void UpdateEmptySquares(List<int[]> locations, Colors color)
-        {
-
-            for (int i = 0; i < locations.Count(); i++)
-            {
-                int[] location = locations[i];
-
-                UpdateEmptySquare(location[0], location[1], color);
-            }
-        }
-
-        public void UpdateEmptySquaresFromList(List<int[]> locations, Colors color)
         {
 
             foreach (int[] location in locations)
@@ -235,55 +259,49 @@ namespace BlokusAPI.Services
 
         public bool UpdateSquare(int x, int y, Colors color)
         {
-            if (!ValidSquarePlacement(x, y, color))
+            // If the square is not on the board.
+            if (!SquareIsOnBoard(x, y))
             {
+                // The placement was not valid.
                 return false;
             }
 
-            BoardValues[x, y] = color;
+            // If the location is already populated.
+            if (!GetIsLocationEmpty(x, y))
+            {
+                // The placment was not valid.
+                return false;
+            }
 
+            UpdateEmptySquare(x, y, color);
+
+            // The placement was valid.
             return true;
         }
 
         public bool ValidSquarePlacement(int x, int y, Colors color)
         {
-            // The location is empty.
+            // The square is off of the board.
+            if (!SquareIsOnBoard(x, y))
+            {
+                return false;
+            }
+
+            // The location is already populated.
             if (GetLocationColor(x, y) != Colors.Empty)
             {
                 return false;
             }
 
-            // The location above has the same color.
-            if (y > 1 && GetLocationColor(x, y - 1) == color)
+            // If there is a neighboring square that is the same color.
+            if (IsColorInValues(GetValuesByLocations(GetEdgeLocations(x, y)), color))
             {
                 return false;
             }
 
-            // The the location below has the same color.
-            if (y < 20 && GetLocationColor(x, y + 1) == color)
-            {
-                return false;
-            }
-
-            // The the location to the left has the same color.
-            if (x > 1 && GetLocationColor(x - 1, y) == color)
-            {
-                return false;
-            }
-
-            // The the location to the right has the same color.
-            if (x < 1 && GetLocationColor(x + 1, y) == color)
-            {
-                return false;
-            }
-
+            // The squre placement is valid.
             return true;
 
-        }
-
-        public bool SquareIsOnBoard(int x, int y)
-        {
-            return x > 0 && x <= 21 && y > 0 && x > 21;
         }
 
         public Colors GetLocationColor(int x, int y)
@@ -291,7 +309,17 @@ namespace BlokusAPI.Services
             return BoardValues[x, y];
         }
 
-        public List<int[]> getPlayableNodes(Colors color)
+        public bool GetIsLocationEmpty(int x, int y)
+        {
+            return GetLocationHasColor(x, y, Colors.Empty);
+        }
+
+        public bool GetLocationHasColor(int x, int y, Colors color)
+        {
+            return GetLocationColor(x, y) == color;
+        }
+
+        public List<int[]> GetPlayableNodes(Colors color)
         {
             List<int[]> playableNodes = new List<int[]>();
             for (int i = 0; i < BoardValues.GetLength(0); i++)
@@ -311,28 +339,28 @@ namespace BlokusAPI.Services
         public bool IsPlayableNode(int x, int y, Colors color)
         {
             // If the location is already taken
-            if (BoardValues[x, y] != Colors.Empty)
+            if (GetLocationColor(x, y) != Colors.Empty)
             {
                 return false;
             }
 
             // If there is already the same color in a neighboring square.
-            if (!areAllValuesEmpty(GetEdgeValues(x, y)))
+            if (IsColorInValues(GetEdgeValues(x, y), color))
             {
                 return false;
             }
 
-            // If there is another piece to play off of.
-            if (!IsOneValuePopuloated(GetCornerValues(x, y)))
+            // If there is not another piece of the same color to play off of.
+            if (!IsColorInValues(GetCornerValues(x, y), color))
             {
                 return false;
             }
 
-            // There was not a piece to play off of.
-            return false;
+            // The node is playable.
+            return true;
         }
 
-        public string GetBoardString()
+        public string GetBoardString() // Not tested.
         {
             string boardString = "";
             for (int i = 0; i < BoardValues.GetLength(0); i++)
@@ -346,7 +374,7 @@ namespace BlokusAPI.Services
             return boardString;
         }
 
-        public string GetBoardCSV()
+        public string GetBoardCSV() // Not tested.
         {
             string boardString = "";
             for (int i = 0; i < BoardValues.GetLength(0); i++)
@@ -362,33 +390,33 @@ namespace BlokusAPI.Services
 
         public bool IsValidLocationFromOrigin(int xOrigin, int yOrigin, int xOffset, int yOffset)
         {
-            int[] location = getLocationFromOrigin(xOrigin, yOrigin, xOffset, yOffset);
-            return IsLocationOnGrid(location[0], location[1]);
+            int[] location = GetLocationFromOrigin(xOrigin, yOrigin, xOffset, yOffset);
+            int locationX = location[0];
+            int locationY = location[1];
+            return SquareIsOnBoard(locationX, locationY);
         }
 
-        public int[] getLocationFromOrigin(int xOrigin, int yOrigin, int xOffset, int yOffset)
+        public int[] GetLocationFromOrigin(int xOrigin, int yOrigin, int xOffset, int yOffset)
         {
             return new int[] { xOrigin + xOffset, yOrigin + yOffset };
         }
 
-        public bool areAllValuesEmpty(List<Colors> values)
+        public bool AreAllValuesEmpty(List<Colors> values)
         {
-            for (int i = 0; i < values.Count(); i++)
-            {
-                if ((int)values[i] >= 1)
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            // If one value is not populated then they are all populated.
+            return !IsOneValuePopuloated(values);
         }
 
         public bool IsOneValuePopuloated(List<Colors> values)
         {
+            return !AreAllValuesColor(values, Colors.Empty);
+        }
+
+        public bool IsColorInValues(List<Colors> values, Colors color)
+        {
             for (int i = 0; i < values.Count(); i++)
             {
-                if ((int)values[i] >= 1)
+                if (values[i] == color)
                 {
                     return true;
                 }
@@ -397,15 +425,38 @@ namespace BlokusAPI.Services
             return false;
         }
 
-        // Method to get a list of populated locations
+        public bool AreAllValuesColor(List<Colors> values, Colors color)
+        {
+            for (int i = 0; i < values.Count(); i++)
+            {
+                Colors value = values[i];
+                if (value != color)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         public List<int[]> GetPopulatedLocations()
+        {
+            return GetLocationsWithoutValue(Colors.Empty);
+        }
+
+        public List<int[]> GetUnpopulatedLocations()
+        {
+             return GetLocationsWithValue(Colors.Empty);
+        }
+
+        public List<int[]> GetLocationsWithoutValue(Colors color)
         {
             List<int[]> locations = new List<int[]>();
             for (int x = 0; x < Width; x++)
             {
                 for (int y = 0; y < Height; y++)
                 {
-                    if ((int)BoardValues[x, y] >= 1)
+                    if (GetLocationColor(x, y) != color)
                     {
                         locations.Add(new int[] { x, y });
                     }
@@ -415,13 +466,6 @@ namespace BlokusAPI.Services
             return locations;
         }
 
-        public List<int[]> GetUnpopulatedLocations()
-        {
-            List<int[]> populatedLocations = GetLocationsWithValue(Colors.Empty);
-
-            return populatedLocations;
-        }
-
         public List<int[]> GetLocationsWithValue(Colors color)
         {
             List<int[]> locations = new List<int[]>();
@@ -429,7 +473,7 @@ namespace BlokusAPI.Services
             {
                 for (int y = 0; y < Height; y++)
                 {
-                    if (BoardValues[x, y] == color)
+                    if (GetLocationColor(x, y) == color)
                     {
                         locations.Add(new int[] { x, y });
                     }
@@ -451,12 +495,13 @@ namespace BlokusAPI.Services
 
         public List<Colors> GetEdgeValues(int x, int y)
         {
-            return GetValuesByLocations(GetCornerLocations(x, y));
+            return GetValuesByLocations(GetEdgeLocations(x, y));
         }
 
         public List<Colors> GetCornerValues(int x, int y)
+
         {
-            return GetValuesByLocations(GetEdgeLocations(x, y));
+            return GetValuesByLocations(GetCornerLocations(x, y));
         }
 
         public List<Colors> GetValuesByLocations(List<int[]> locations)
@@ -464,7 +509,11 @@ namespace BlokusAPI.Services
             List<Colors> values = new List<Colors>();
             for (int i = 0; i < locations.Count(); i++)
             {
-                values.Add(BoardValues[locations[i][0], locations[i][1]]);
+
+                int x = locations[i][0];
+                int y = locations[i][1];
+
+                values.Add(GetLocationColor(x, y));
             }
 
             return values;
@@ -474,22 +523,22 @@ namespace BlokusAPI.Services
         {
             List<int[]> locations = new List<int[]>();
 
-            if (IsLocationOnGrid(x + 1, y))
+            if (SquareIsOnBoard(x + 1, y)) // Positive X.
             {
                 locations.Add(new int[] { x + 1, y });
             }
 
-            if (IsLocationOnGrid(x - 1, y))
+            if (SquareIsOnBoard(x - 1, y)) // Negative X
             {
                 locations.Add(new int[] { x - 1, y });
             }
 
-            if (IsLocationOnGrid(x, y + 1))
+            if (SquareIsOnBoard(x, y + 1)) // Positive Y
             {
                 locations.Add(new int[] { x, y + 1 });
             }
 
-            if (IsLocationOnGrid(x, y - 1))
+            if (SquareIsOnBoard(x, y - 1)) // Negative Y
             {
                 locations.Add(new int[] { x, y - 1 });
             }
@@ -501,22 +550,22 @@ namespace BlokusAPI.Services
         {
             List<int[]> locations = new List<int[]>();
 
-            if (IsLocationOnGrid(x + 1, y + 1))
+            if (SquareIsOnBoard(x + 1, y + 1)) // Positive X and Y.
             {
                 locations.Add(new int[] { x + 1, y + 1 });
             }
 
-            if (IsLocationOnGrid(x - 1, y - 1))
+            if (SquareIsOnBoard(x - 1, y - 1)) // Negative X and Y
             {
                 locations.Add(new int[] { x - 1, y - 1 });
             }
 
-            if (IsLocationOnGrid(x - 1, y + 1))
+            if (SquareIsOnBoard(x - 1, y + 1)) // Negative X and positive Y.
             {
                 locations.Add(new int[] { x - 1, y + 1 });
             }
 
-            if (IsLocationOnGrid(x + 1, y - 1))
+            if (SquareIsOnBoard(x + 1, y - 1)) // Positive X and negative Y.
             {
                 locations.Add(new int[] { x + 1, y - 1 });
             }
@@ -524,7 +573,7 @@ namespace BlokusAPI.Services
             return locations;
         }
 
-        public bool IsLocationOnGrid(int x, int y)
+        public bool SquareIsOnBoard(int x, int y)
         {
             return x >= 0 && x < Width && y >= 0 && y < Height;
         }

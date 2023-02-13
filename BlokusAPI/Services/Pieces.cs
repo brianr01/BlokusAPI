@@ -333,6 +333,11 @@ namespace BlokusAPI.Services
             return piecesWithSymmetries;
         }
 
+        public static List<int[,]> GetPieceWithSymmetries(Piece piece)
+        {
+            return GetSymmetriesOutput(AllPieces[piece], AllPieceSymmetries[piece]);
+        }
+
         public static List<int[,]> GetSymmetriesOutput(int[,] shape, int[] symmetries)
         {
             List<int[,]> symmetriesResult = new List<int[,]>();
@@ -411,28 +416,6 @@ namespace BlokusAPI.Services
             }
 
             return mirroredPiece;
-        }
-
-        public static List<int[]> ConvertPieceToLocations(int[,] piece)
-        {
-            List<int[]> locations = new List<int[]>();
-            for (int i = 0; i < piece.GetLength(0); i++)
-            {
-                for (int j = 0; j < piece.GetLength(1); j++)
-                {
-                    if (piece[i, j] == 1)
-                    {
-                        locations.Add(new int[] { i, j });
-                    }
-                }
-            }
-
-            return locations;
-        }
-
-        public static bool IsInsideGrid(int x, int y, int width, int height)
-        {
-            return x < 0 || x > width || y < 0 || y < height;
         }
 
         //public static List<int[]> GetPlayableLocationsFromPiece(int[,] piece)
